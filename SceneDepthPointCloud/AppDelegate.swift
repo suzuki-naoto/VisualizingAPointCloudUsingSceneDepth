@@ -14,7 +14,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        if !ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth) {
+        if !ARWorldTrackingConfiguration.supportsFrameSemantics([.sceneDepth, .smoothedSceneDepth]) {
             // Ensure that the device supports scene depth and present
             //  an error-message view controller, if not.
             let storyboard = UIStoryboard(name: "Main", bundle: nil)

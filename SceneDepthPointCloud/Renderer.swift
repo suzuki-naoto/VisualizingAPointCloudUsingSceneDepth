@@ -86,7 +86,7 @@ final class Renderer {
     private lazy var lastCameraTransform = sampleFrame.camera.transform
     
     // interfaces
-    var confidenceThreshold = 1 {
+    var confidenceThreshold = 2 {
         didSet {
             // apply the change for the shader
             pointCloudUniforms.confidenceThreshold = Int32(confidenceThreshold)
@@ -100,6 +100,8 @@ final class Renderer {
         }
     }
     
+    var sceneDepthMode = 1  // 0: Raw, 1: Smooth
+
     init(session: ARSession, metalDevice device: MTLDevice, renderDestination: RenderDestinationProvider) {
         self.session = session
         self.device = device
@@ -144,12 +146,14 @@ final class Renderer {
     }
     
     private func updateDepthTextures(frame: ARFrame) -> Bool {
-        guard let depthMap = frame.sceneDepth?.depthMap,
-            let confidenceMap = frame.sceneDepth?.confidenceMap else {
-                return false
+        guard let sceneDepth = sceneDepthMode == 0 ? frame.sceneDepth : frame.smoothedSceneDepth else {
+            return false
         }
-        
-        depthTexture = makeTexture(fromPixelBuffer: depthMap, pixelFormat: .r32Float, planeIndex: 0)
+        guard let confidenceMap = sceneDepth.confidenceMap else {
+            return false
+        }
+
+        depthTexture = makeTexture(fromPixelBuffer: sceneDepth.depthMap, pixelFormat: .r32Float, planeIndex: 0)
         confidenceTexture = makeTexture(fromPixelBuffer: confidenceMap, pixelFormat: .r8Uint, planeIndex: 0)
         
         return true
@@ -371,5 +375,13 @@ private extension Renderer {
 
         let rotationAngle = Float(cameraToDisplayRotation(orientation: orientation)) * .degreesToRadian
         return flipYZ * matrix_float4x4(simd_quaternion(rotationAngle, Float3(0, 0, 1)))
+    }
+}
+
+// MARK: - Renderer Control
+
+extension Renderer {
+    func reset() {
+        particlesBuffer = .init(device: device, count: maxPoints, index: kParticleUniforms.rawValue)
     }
 }

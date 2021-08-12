@@ -12,6 +12,7 @@ import ARKit
 
 final class ViewController: UIViewController, ARSessionDelegate {
     private let isUIEnabled = true
+    private let sceneDepthControl = UISegmentedControl(items: ["Raw", "Smooth"])
     private let confidenceControl = UISegmentedControl(items: ["Low", "Medium", "High"])
     private let rgbRadiusSlider = UISlider()
     
@@ -42,20 +43,39 @@ final class ViewController: UIViewController, ARSessionDelegate {
             renderer = Renderer(session: session, metalDevice: device, renderDestination: view)
             renderer.drawRectResized(size: view.bounds.size)
         }
-        
+
+
+        // Scene depth control
+        let sceneDepthLabel = UILabel()
+        sceneDepthLabel.text = "Scene Depth"
+        sceneDepthControl.selectedSegmentIndex = renderer.sceneDepthMode
+        sceneDepthControl.addTarget(self, action: #selector(viewValueChanged), for: .valueChanged)
+        let sceneDepthStack = UIStackView(arrangedSubviews: [sceneDepthLabel, sceneDepthControl, UIView()])
+        sceneDepthStack.axis = .horizontal
+        sceneDepthStack.spacing = 20
+
         // Confidence control
-        confidenceControl.backgroundColor = .white
+        let confidenceLabel = UILabel()
+        confidenceLabel.text = "Confidence"
         confidenceControl.selectedSegmentIndex = renderer.confidenceThreshold
         confidenceControl.addTarget(self, action: #selector(viewValueChanged), for: .valueChanged)
-        
+        let confidenceStack = UIStackView(arrangedSubviews: [confidenceLabel, confidenceControl])
+        confidenceStack.axis = .horizontal
+        confidenceStack.spacing = 20
+
         // RGB Radius control
+        let rgbRadiusLabel = UILabel()
+        rgbRadiusLabel.text = "Background"
         rgbRadiusSlider.minimumValue = 0
         rgbRadiusSlider.maximumValue = 1.5
         rgbRadiusSlider.isContinuous = true
         rgbRadiusSlider.value = renderer.rgbRadius
         rgbRadiusSlider.addTarget(self, action: #selector(viewValueChanged), for: .valueChanged)
-        
-        let stackView = UIStackView(arrangedSubviews: [confidenceControl, rgbRadiusSlider])
+        let rgbRadiusStack = UIStackView(arrangedSubviews: [rgbRadiusLabel, rgbRadiusSlider])
+        rgbRadiusStack.axis = .horizontal
+        rgbRadiusStack.spacing = 20
+
+        let stackView = UIStackView(arrangedSubviews: [sceneDepthStack, confidenceStack, rgbRadiusStack])
         stackView.isHidden = !isUIEnabled
         stackView.translatesAutoresizingMaskIntoConstraints = false
         stackView.axis = .vertical
@@ -73,7 +93,7 @@ final class ViewController: UIViewController, ARSessionDelegate {
         // Create a world-tracking configuration, and
         // enable the scene depth frame-semantic.
         let configuration = ARWorldTrackingConfiguration()
-        configuration.frameSemantics = .sceneDepth
+        configuration.frameSemantics = [.sceneDepth, .smoothedSceneDepth]
 
         // Run the view's session
         session.run(configuration)
@@ -88,10 +108,15 @@ final class ViewController: UIViewController, ARSessionDelegate {
             
         case confidenceControl:
             renderer.confidenceThreshold = confidenceControl.selectedSegmentIndex
-            
+            renderer.reset()
+
         case rgbRadiusSlider:
             renderer.rgbRadius = rgbRadiusSlider.value
             
+        case sceneDepthControl:
+            renderer.sceneDepthMode = sceneDepthControl.selectedSegmentIndex
+            renderer.reset()
+
         default:
             break
         }
