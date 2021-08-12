@@ -1,6 +1,6 @@
 # Visualizing a Point Cloud Using Scene Depth
 
-Place points in the real-world using the scene's depth data to visualize the shape of the physical environment.
+Place points in the real-world using the scene's depth data to visualize the shape of the physical environment.  
 This repository distributes the point cloud sample code that Apple released at WWDC20, with the addition of the smoothedSceneDepth feature.
 
 ## Overview
